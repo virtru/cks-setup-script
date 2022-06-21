@@ -147,4 +147,6 @@ tar -zcvf send_to_virtru.tar.gz ./cks_info
 
 rm -rf ./cks_info
 
-# docker run -it cks --env-file ./setup/env/cks.env -p 9000:9000 --mount type=bind,source="$(pwd)"/setup/keys,target=/app/keys virtru/cks:latest
+# Create the Run File
+touch ./run.sh
+echo "docker run -it cks --env-file ./setup/env/cks.env -p 9000:9000 --mount type=bind,source="$(pwd)"/keys,target=/app/keys virtru/cks:latest" >> ./run.sh
