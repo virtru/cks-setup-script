@@ -149,4 +149,4 @@ rm -rf ./cks_info
 
 # Create the Run File
 touch ./run.sh
-echo "docker run -it cks --env-file ./setup/env/cks.env -p 9000:9000 --mount type=bind,source="$(pwd)"/keys,target=/app/keys virtru/cks:latest" >> ./run.sh
+echo "docker run -it cks --env-file $(pwd)/env/cks.env -p 9000:9000 --mount type=bind,source="$(pwd)"/keys,target=/app/keys virtru/cks:latest" >> ./run.sh
