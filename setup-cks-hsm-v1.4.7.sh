@@ -87,7 +87,7 @@ if prompt "Did the CKS successfully list the keys? Please enter yes or no."; the
   source "$WORKING_DIR/env/cks.env"
   set +o allexport
 
-  printf "Please use the following command to run CKS.\n\n"
+  printf "Command to Serve CKS:\n\n"
   
-  echo "docker run --env-file "$WORKING_DIR"/env/cks.env -p $PORT:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt cks-test:latest serve"
+  echo "docker run --env-file "$WORKING_DIR"/env/cks.env -p $PORT:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt virtru/cks:latest serve" > ./run.sh
 fi
