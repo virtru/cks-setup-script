@@ -31,6 +31,19 @@ mkdirCheck () {
  fi
 }
 
+updateEnvVariable () {
+  VARIABLE=$1
+  VALUE=$2
+  LINE="$(awk "/${1}/{ print NR; exit }" ../cks/setup/env/cks.env)"
+
+  if [ -z "$LINE" ]; then
+    echo "$VARIABLE=$VALUE" >> "$WORKING_DIR"/env/cks.env
+  else
+    LINE="$LINE"s
+    sed -i '.bak' "$LINE|.*|$VARIABLE=$VALUE|" "$WORKING_DIR"/env/cks.env
+  fi
+}
+
 printf "${CLEAR}${GREEN}********************************************\n            CKS HSM SETUP WIZARD\n********************************************\n${RESET}\n"
 
 read -p "Enter Working Directory (should be the same dir used to setup CKS): " WORKING_DIR
@@ -78,9 +91,20 @@ fi
 docker run -e HSM_IP="$HSM_IP" -e PKCS11_VENDOR="$PKCS11_VENDOR" -e PKCS11_LIB_NAME="$PKCS11_LIB_NAME" -e PKCS11_LIB_PATH="$PKCS11_LIB_PATH" -e PKCS11_SLOT_LBL="$PKCS11_SLOT_LBL" -e PKCS11_KEY_LBL="$PKCS11_KEY_LBL" -e PKCS11_PIN="$PKCS11_PIN" -e KEY_PROVIDER_TYPE="$KEY_PROVIDER_TYPE" -e CRYPTO_OPERATIONS_TYPE="$CRYPTO_OPERATIONS_TYPE" --env-file "$WORKING_DIR"/env/cks.env -p 9000:9000 --mount type=bind,source="$WORKING_DIR"/keys,target=/app/keys --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt cks-test:latest list-keys
 
 if prompt "Did the CKS successfully list the keys? Please enter yes or no."; then
-  node update-env-file.js "$WORKING_DIR"/env/cks.env HSM_IP="$HSM_IP" PKCS11_VENDOR="$PKCS11_VENDOR" PKCS11_LIB_NAME="$PKCS11_LIB_NAME" PKCS11_LIB_PATH="$PKCS11_LIB_PATH" PKCS11_SLOT_LBL="$PKCS11_SLOT_LBL" PKCS11_KEY_LBL="$PKCS11_KEY_LBL" PKCS11_PIN="$PKCS11_PIN" KEY_PROVIDER_TYPE="$KEY_PROVIDER_TYPE" CRYPTO_OPERATIONS_TYPE="$CRYPTO_OPERATIONS_TYPE"
+  #node update-env-file.js "$WORKING_DIR"/env/cks.env HSM_IP="$HSM_IP" PKCS11_VENDOR="$PKCS11_VENDOR" PKCS11_LIB_NAME="$PKCS11_LIB_NAME" PKCS11_LIB_PATH="$PKCS11_LIB_PATH" PKCS11_SLOT_LBL="$PKCS11_SLOT_LBL" PKCS11_KEY_LBL="$PKCS11_KEY_LBL" PKCS11_PIN="$PKCS11_PIN" KEY_PROVIDER_TYPE="$KEY_PROVIDER_TYPE" CRYPTO_OPERATIONS_TYPE="$CRYPTO_OPERATIONS_TYPE"
 
   echo "Updating the environment file at $WORKING_DIR/env/cks.env."
+
+  updateEnvVariable "HSM_IP" "$HSM_IP"
+  updateEnvVariable "PKCS11_VENDOR" "$PKCS11_VENDOR"
+  updateEnvVariable "PKCS11_LIB_NAME" "$PKCS11_LIB_NAME"
+  updateEnvVariable "PKCS11_LIB_PATH" "$PKCS11_LIB_PATH"
+  updateEnvVariable "PKCS11_SLOT_LBL" "$PKCS11_SLOT_LBL"
+  updateEnvVariable "PKCS11_KEY_LBL" "$PKCS11_KEY_LBL"
+  updateEnvVariable "PKCS11_PIN" "$PKCS11_PIN"
+  updateEnvVariable "KEY_PROVIDER_TYPE" "$KEY_PROVIDER_TYPE"
+  updateEnvVariable "CRYPTO_OPERATIONS_TYPE" "$CRYPTO_OPERATIONS_TYPE"
+
   echo "Setup of HSM complete"
 
   set -o allexport
