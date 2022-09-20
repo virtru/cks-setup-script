@@ -19,18 +19,6 @@ prompt () {
   done
 }
 
-# Create Directory (prompt if exists to overwrite)
-mkdirCheck () {
- if [ -d "$1" ]; then
-  if prompt "Directory \"$1\" already exist! Do you want to replace \"$1\" [yes/no]?"; then
-    rm -rf $1
-    mkdir -p $1
-  fi
- else
-  mkdir -p $1
- fi
-}
-
 updateEnvVariable () {
   VARIABLE=$1
   VALUE=$2
@@ -91,8 +79,6 @@ fi
 docker run -e HSM_IP="$HSM_IP" -e PKCS11_VENDOR="$PKCS11_VENDOR" -e PKCS11_LIB_NAME="$PKCS11_LIB_NAME" -e PKCS11_LIB_PATH="$PKCS11_LIB_PATH" -e PKCS11_SLOT_LBL="$PKCS11_SLOT_LBL" -e PKCS11_KEY_LBL="$PKCS11_KEY_LBL" -e PKCS11_PIN="$PKCS11_PIN" -e KEY_PROVIDER_TYPE="$KEY_PROVIDER_TYPE" -e CRYPTO_OPERATIONS_TYPE="$CRYPTO_OPERATIONS_TYPE" --env-file "$WORKING_DIR"/env/cks.env -p 9000:9000 --mount type=bind,source="$WORKING_DIR"/keys,target=/app/keys --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt cks-test:latest list-keys
 
 if prompt "Did the CKS successfully list the keys? Please enter yes or no."; then
-  #node update-env-file.js "$WORKING_DIR"/env/cks.env HSM_IP="$HSM_IP" PKCS11_VENDOR="$PKCS11_VENDOR" PKCS11_LIB_NAME="$PKCS11_LIB_NAME" PKCS11_LIB_PATH="$PKCS11_LIB_PATH" PKCS11_SLOT_LBL="$PKCS11_SLOT_LBL" PKCS11_KEY_LBL="$PKCS11_KEY_LBL" PKCS11_PIN="$PKCS11_PIN" KEY_PROVIDER_TYPE="$KEY_PROVIDER_TYPE" CRYPTO_OPERATIONS_TYPE="$CRYPTO_OPERATIONS_TYPE"
-
   echo "Updating the environment file at $WORKING_DIR/env/cks.env."
 
   updateEnvVariable "HSM_IP" "$HSM_IP"
@@ -111,7 +97,9 @@ if prompt "Did the CKS successfully list the keys? Please enter yes or no."; the
   source "$WORKING_DIR/env/cks.env"
   set +o allexport
 
-  printf "Command to Serve CKS:\n\n"
-  
-  echo "docker run --env-file "$WORKING_DIR"/env/cks.env -p $PORT:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt virtru/cks:latest serve" > ./run.sh
+  if [ $PKCS11_LIB_NAME = "CloudHSM" ]; then
+    echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt virtru/cks:v1.6.0 serve" > "$WORKING_DIR/run.sh"
+  else
+    echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl virtru/cks:v1.6.0 serve" > "$WORKING_DIR/run.sh"
+  fi
 fi

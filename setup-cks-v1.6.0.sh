@@ -81,6 +81,7 @@ openssl req -x509 -newkey rsa:2048 -nodes -keyout ./ssl/${CKS_FQDN}.key -out ./s
 
 # Combine Key and Certificate
 cat ./ssl/${CKS_FQDN}.key `find ./ssl/ -type f \( -name "${CKS_FQDN}*.csr" -or -name "${CKS_FQDN}*.crt" \)` `find ./ssl/ -type f \( ! -name "${CKS_FQDN}*" -and ! -name "ssl.pem" \)` > ./ssl/ssl.pem
+chmod 644 ./ssl/${CKS_FQDN}.key
 
 # Generate RSA Key Pair
 openssl genrsa -out ./keys/rsa_001.pem 2048
@@ -90,6 +91,8 @@ FINGERPRINT=$(openssl rsa -in ./keys/rsa_001.pub -pubin -outform der | openssl d
 FINGERPRINT=$(echo ${FINGERPRINT//[+]/-})
 FINGERPRINT=$(echo ${FINGERPRINT//[\/]/_})
 FINGERPRINT=$(echo ${FINGERPRINT//[=]/''})
+chmod 644 ./keys/rsa_001.pem
+chmod 644 ./keys/rsa_001.pub
 
 # Create Token (replicating the same logic in the CKS Setup Wizard)
 UUID1=$(uuidgen | tr -d '-')
@@ -119,6 +122,8 @@ printf "AUTH_TOKEN_STORAGE_TYPE=%s\n" $AUTH_TOKEN_STORAGE_TYPE >> ./env/cks.env
 printf "AUTH_TOKEN_STORAGE_IN_MEMORY_TOKEN_JSON=%s\n" "$TOKEN_JSON" >> ./env/cks.env
 printf "KEY_PROVIDER_TYPE=%s\n" $KEY_PROVIDER_TYPE >> ./env/cks.env
 printf "KEY_PROVIDER_PATH=%s\n" $KEY_PROVIDER_PATH >> ./env/cks.env
+printf "HTTPS_KEY_PATH=%s\n" /app/ssl/$CKS_FQDN.key >> ./env/cks.env
+printf "HTTPS_CERT_PATH=%s\n" /app/ssl/$CKS_FQDN.crt >> ./env/cks.env
 
 # Print Summary
 printf "Summary:\n\n"
@@ -150,4 +155,4 @@ rm -rf ./cks_info
 # Create the Run File
 touch ./run.sh
 
-echo "docker run --env-file "$WORKING_DIR"/env/cks.env -p $PORT:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl virtru/cks:latest serve" > ./run.sh
+echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl virtru/cks:v1.6.0 serve" > ./run.sh
