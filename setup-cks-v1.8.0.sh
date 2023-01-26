@@ -14,6 +14,9 @@ LOG_CONSOLE_ENABLED=true
 AUTH_TOKEN_STORAGE_TYPE="in-memory"
 KEY_PROVIDER_TYPE="file"
 KEY_PROVIDER_PATH="/app/keys"
+HMAC_AUTH_ENABLED=false
+JWT_AUTH_ENABLED=true
+JWT_AUTH_AUDIENCE="Virtru_Org_ID"
 
 # Yes or No Prompt
 prompt () {
@@ -73,6 +76,15 @@ echo "CKS FQDN is $CKS_FQDN"
 echo "SUPPORT_EMAIL is $SUPPORT_EMAIL"
 echo "SUPPORT_URL is $SUPPORT_URL"
 
+read -p "Enter your Virtru Org ID: " JWT_AUTH_AUDIENCE
+
+printf "Requests from Virtru to your CKS are authenticated with JWTs.\n"
+printf "Authentication via HMACs may be enabled to support requests from CSE to CKS.\n"
+
+if prompt "Do you want to enable auth via HMAC [yes/no]?"; then
+  HMAC_AUTH_ENABLED=true
+fi
+
 # Change to the Working Directory specified by the User
 cd $WORKING_DIR
 
@@ -94,22 +106,28 @@ FINGERPRINT=$(echo ${FINGERPRINT//[=]/''})
 chmod 644 ./keys/rsa_001.pem
 chmod 644 ./keys/rsa_001.pub
 
+SECRET_B64_FINAL=""
+TOKEN_ID=""
+TOKEN_JSON=""
+
 # Create Token (replicating the same logic in the CKS Setup Wizard)
-UUID1=$(uuidgen | tr -d '-')
-UUID2=$(uuidgen | tr -d '-')
-SECRET=$(printf "%s%s" $UUID1 $UUID2)
-SECRET_B64=$(echo -n "$SECRET" | openssl dgst -sha384 -binary | base64)
-SECRET_B64_FINAL=$(echo ${SECRET_B64//[+]/-})
-SECRET_B64_FINAL=$(echo ${SECRET_B64_FINAL//[\/]/_})
+if [ "$HMAC_AUTH_ENABLED" = true ]; then
+  UUID1=$(uuidgen | tr -d '-')
+  UUID2=$(uuidgen | tr -d '-')
+  SECRET=$(printf "%s%s" $UUID1 $UUID2)
+  SECRET_B64=$(echo -n "$SECRET" | openssl dgst -sha384 -binary | base64)
+  SECRET_B64_FINAL=$(echo ${SECRET_B64//[+]/-})
+  SECRET_B64_FINAL=$(echo ${SECRET_B64_FINAL//[\/]/_})
 
-DATE_STR=$(date +%Y-%m-%d)
-TOKEN_ID=$(printf "virtru-%s@token.virtru.com" $DATE_STR)
+  DATE_STR=$(date +%Y-%m-%d)
+  TOKEN_ID=$(printf "virtru-%s@token.virtru.com" $DATE_STR)
 
-# Create the Tokens File
-TOKEN_JSON=$(printf '[{"displayName": "Token For the Virtru ACM to access this CKS", "tokenId": "%s", "lastModified": "2016-01-01T23:48:18.064Z", "created": "2016-01-01T23:48:18.064Z", "state": "active", "version": "1.0.0", "attributes": [{"value": "virtru", "key": "virtru:data:creator"}, {"value": "admin@virtru.com", "key": "virtru:data:owner"}, {"value": "service", "key": "virtru:service:type"}], "encryptedToken": {"secret": "%s"}}]' "$TOKEN_ID" "$SECRET_B64_FINAL")
+  # Create the Tokens File
+  TOKEN_JSON=$(printf '[{"displayName": "Token For the Virtru ACM to access this CKS", "tokenId": "%s", "lastModified": "2016-01-01T23:48:18.064Z", "created": "2016-01-01T23:48:18.064Z", "state": "active", "version": "1.0.0", "attributes": [{"value": "virtru", "key": "virtru:data:creator"}, {"value": "admin@virtru.com", "key": "virtru:data:owner"}, {"value": "service", "key": "virtru:service:type"}], "encryptedToken": {"secret": "%s"}}]' "$TOKEN_ID" "$SECRET_B64_FINAL")
 
-touch ./token-store/tokens.json
-echo "$TOKEN_JSON" >> ./token-store/tokens.json
+  touch ./token-store/tokens.json
+  echo "$TOKEN_JSON" >> ./token-store/tokens.json
+fi
 
 # Create the Environment File
 touch ./env/cks.env
@@ -118,12 +136,21 @@ touch ./env/cks.env
 printf "PORT=%s\n" $PORT >> ./env/cks.env
 printf "LOG_RSYSLOG_ENABLED=%s\n" $LOG_RSYS_ENABLED >> ./env/cks.env
 printf "LOG_CONSOLE_ENABLED=%s\n" $LOG_CONSOLE_ENABLED >> ./env/cks.env
-printf "AUTH_TOKEN_STORAGE_TYPE=%s\n" $AUTH_TOKEN_STORAGE_TYPE >> ./env/cks.env
-printf "AUTH_TOKEN_STORAGE_IN_MEMORY_TOKEN_JSON=%s\n" "$TOKEN_JSON" >> ./env/cks.env
 printf "KEY_PROVIDER_TYPE=%s\n" $KEY_PROVIDER_TYPE >> ./env/cks.env
 printf "KEY_PROVIDER_PATH=%s\n" $KEY_PROVIDER_PATH >> ./env/cks.env
 printf "HTTPS_KEY_PATH=%s\n" /app/ssl/$CKS_FQDN.key >> ./env/cks.env
 printf "HTTPS_CERT_PATH=%s\n" /app/ssl/$CKS_FQDN.crt >> ./env/cks.env
+printf "HMAC_AUTH_ENABLED=%s\n" $HMAC_AUTH_ENABLED >> ./env/cks.env
+printf "JWT_AUTH_ENABLED=%s\n" $JWT_AUTH_ENABLED >> ./env/cks.env
+
+if [ "$HMAC_AUTH_ENABLED" = true ]; then
+  printf "AUTH_TOKEN_STORAGE_TYPE=%s\n" $AUTH_TOKEN_STORAGE_TYPE >> ./env/cks.env
+  printf "AUTH_TOKEN_STORAGE_IN_MEMORY_TOKEN_JSON=%s\n" "$TOKEN_JSON" >> ./env/cks.env
+fi
+
+if [ "$JWT_AUTH_ENABLED" = true ]; then
+  printf "JWT_AUTH_AUDIENCE=%s\n" $JWT_AUTH_AUDIENCE >> ./env/cks.env
+fi
 
 # Print Summary
 printf "Summary:\n\n"
@@ -136,6 +163,9 @@ printf "\tCKS Rewrap Key\n"
 printf "\tKey Mode: generate\n"
 printf "\tKey Path: %s/keys\n" $(pwd)
 printf "\tKey Fingerprint: %s\n\n" "$FINGERPRINT"
+printf "\tAuth\n"
+printf "\tJWT Enabled: %s\n" "$JWT_AUTH_ENABLED"
+printf "\tHMAC Enabled: %s\n\n" "$HMAC_AUTH_ENABLED"
 printf "\tTroubleshooting\n"
 printf "\tSupport URL: %s\n" $SUPPORT_URL
 printf "\tSupport Email: %s\n" $SUPPORT_EMAIL
@@ -144,8 +174,12 @@ TOKEN_INFO=$(printf '{"support_url": "%s", "host": "%s", "admin_email": "%s", "a
 
 # Create the Send to Virtru File
 mkdir -p cks_info
-touch ./cks_info/token_info.json
-echo "$TOKEN_INFO" >> ./cks_info/token_info.json
+
+if [ "$HMAC_AUTH_ENABLED" = true ]; then
+  touch ./cks_info/token_info.json
+  echo "$TOKEN_INFO" >> ./cks_info/token_info.json
+fi
+
 cp ./keys/rsa_001.pub ./cks_info/rsa_001.pub
 
 tar -zcvf send_to_virtru.tar.gz ./cks_info
@@ -155,4 +189,4 @@ rm -rf ./cks_info
 # Create the Run File
 touch ./run.sh
 
-echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl virtru/cks:v1.6.2 serve" > ./run.sh
+echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl virtru/cks:v1.8.0 serve" > ./run.sh
