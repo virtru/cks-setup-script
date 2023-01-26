@@ -14,4 +14,4 @@ curl -s https://api.github.com/repos/virtru-corp/cks-setup-script/releases/lates
 
 2. Run the script with Bash
 
-`bash ./setup-cks-v3.0.0.sh` (replace with the desired version)
+`bash ./setup-cks-v1.8.0.sh` (replace with the desired version)
