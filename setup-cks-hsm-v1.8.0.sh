@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CKS_VERSION="1.6.2"
+CKS_VERSION="1.8.0"
 
 RED="\033[1;31m"
 BOLD="\033[1m"

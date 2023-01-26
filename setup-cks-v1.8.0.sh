@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CKS_VERSION="1.8.0"
+
 RED="\033[1;31m"
 BOLD="\033[1m"
 GREEN="\033[1;32m"
@@ -16,7 +18,7 @@ KEY_PROVIDER_TYPE="file"
 KEY_PROVIDER_PATH="/app/keys"
 HMAC_AUTH_ENABLED=false
 JWT_AUTH_ENABLED=true
-JWT_AUTH_AUDIENCE="Virtru_Org_ID"
+JWT_AUTH_AUDIENCE=""
 
 # Yes or No Prompt
 prompt () {
@@ -71,15 +73,25 @@ read -p "Define CKS URL (FQDN):
 read -p "Enter the support email for your CKS Deployment: " SUPPORT_EMAIL
 read -p "Enter the support url for your CKS Deployment: " SUPPORT_URL
 
-echo "WORKING DIR is $WORKING_DIR"
-echo "CKS FQDN is $CKS_FQDN"
-echo "SUPPORT_EMAIL is $SUPPORT_EMAIL"
-echo "SUPPORT_URL is $SUPPORT_URL"
+printf "\nWORKING DIR is $WORKING_DIR\n"
+printf "CKS FQDN is $CKS_FQDN\n"
+printf "SUPPORT_EMAIL is $SUPPORT_EMAIL\n"
+printf "SUPPORT_URL is $SUPPORT_URL\n\n"
 
-read -p "Enter your Virtru Org ID: " JWT_AUTH_AUDIENCE
+l=0
 
-printf "Requests from Virtru to your CKS are authenticated with JWTs.\n"
-printf "Authentication via HMACs may be enabled to support requests from CSE to CKS.\n"
+while [ $l -ne 36 ]; do
+  read -p "Enter your Virtru Org ID: " JWT_AUTH_AUDIENCE
+
+  l=${#JWT_AUTH_AUDIENCE}
+
+  if [ $l -ne 36 ]; then
+    printf "This is not a valid Virtru Org ID.\n"
+  fi
+done
+
+printf "\nRequests from Virtru to your CKS are authenticated with JWTs.\n"
+printf "Authentication via HMACs may be enabled to support requests from CSE to CKS.\n\n"
 
 if prompt "Do you want to enable auth via HMAC [yes/no]?"; then
   HMAC_AUTH_ENABLED=true
@@ -165,7 +177,8 @@ printf "\tKey Path: %s/keys\n" $(pwd)
 printf "\tKey Fingerprint: %s\n\n" "$FINGERPRINT"
 printf "\tAuth\n"
 printf "\tJWT Enabled: %s\n" "$JWT_AUTH_ENABLED"
-printf "\tHMAC Enabled: %s\n\n" "$HMAC_AUTH_ENABLED"
+printf "\tHMAC Enabled: %s\n" "$HMAC_AUTH_ENABLED"
+printf "\tVirtru Org ID: %s\n\n" "$JWT_AUTH_AUDIENCE"
 printf "\tTroubleshooting\n"
 printf "\tSupport URL: %s\n" $SUPPORT_URL
 printf "\tSupport Email: %s\n" $SUPPORT_EMAIL
@@ -189,4 +202,4 @@ rm -rf ./cks_info
 # Create the Run File
 touch ./run.sh
 
-echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl virtru/cks:v1.8.0 serve" > ./run.sh
+echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl virtru/cks:v"$CKS_VERSION" serve" > ./run.sh
