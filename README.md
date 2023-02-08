@@ -10,7 +10,9 @@ curl -s https://raw.githubusercontent.com/virtru-corp/cks-setup-script/main/down
 
 2. Run the download script with Bash
 
-`bash ./download.sh`
+```
+bash ./download.sh
+```
 
 ### Initial Setup
 
