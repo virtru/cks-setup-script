@@ -2,7 +2,7 @@
 
 ## Instructions
 
-1. Download the appropriate setup script to the host.
+1. Download the script to the host.
 
 ```
 curl -s https://raw.githubusercontent.com/virtru-corp/cks-setup-script/main/download.sh -o download.sh
@@ -12,6 +12,14 @@ curl -s https://raw.githubusercontent.com/virtru-corp/cks-setup-script/main/down
 
 `bash ./download.sh`
 
-3. Run the setup script with Bash
+### Initial Setup
 
-`bash ./cks-setup-scripts/setup-cks-latest.sh`
+1. Run the setup script with Bash
+
+`bash ./cks-setup-scripts/setup-cks-latest.sh` (or desired version)
+
+### Updates
+
+1. Run the update script with Bash
+
+`bash ./cks-setup-scripts/update.sh`

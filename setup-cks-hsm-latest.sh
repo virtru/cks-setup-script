@@ -1,6 +1,7 @@
 #!/bin/bash
 
-CKS_VERSION="$(head -1 VERSION | sed 's/ //g')"
+SCRIPT_DIR=$( dirname -- "$( readlink -f -- "$0"; )"; )
+CKS_VERSION="$(head -1 "$DIR"/VERSION | sed 's/ //g')"
 
 RED="\033[1;31m"
 BOLD="\033[1m"
