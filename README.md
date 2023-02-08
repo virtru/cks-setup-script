@@ -5,13 +5,13 @@
 1. Download the appropriate setup script to the host.
 
 ```
-curl -s https://api.github.com/repos/virtru-corp/cks-setup-script/releases/latest \
-| grep "browser_download_url.*sh" \
-| cut -d : -f 2,3 \
-| tr -d \" \
-| sudo wget -qi -
+curl -s https://github.com/virtru-corp/cks-setup-script/blob/main/download.sh -o download.sh
 ```
 
-2. Run the script with Bash
+2. Run the download script with Bash
 
-`bash ./setup-cks-v1.8.1.sh` (replace with the desired version)
+`bash ./download.sh`
+
+3. Run the setup script with Bash
+
+`bash ./setup-cks-latest.sh`
