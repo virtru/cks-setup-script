@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CKS_VERSION="1.8.1"
+CKS_VERSION="$(head -1 VERSION | sed 's/ //g')"
 
 RED="\033[1;31m"
 BOLD="\033[1m"
