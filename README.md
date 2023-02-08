@@ -14,4 +14,4 @@ curl -s https://raw.githubusercontent.com/virtru-corp/cks-setup-script/main/down
 
 3. Run the setup script with Bash
 
-`bash ./setup-cks-latest.sh`
+`bash ./cks-setup-scripts/setup-cks-latest.sh`
