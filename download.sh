@@ -6,7 +6,7 @@ rm -rf cks-setup-scripts
 # Create Directory
 mkdir cks-setup-scripts
 
-CONTENT=$(curl -s https://api.github.com/repos/virtru-corp/cks-setup-script/releases/latest)
+CONTENT=$(curl -s https://raw.githubusercontent.com/virtru-corp/cks-setup-script/main/download.sh)
 
 URL=$(echo "$CONTENT" | grep "tarball_url*" | cut -d : -f 2,3 | tr -d \" | tr -d ,)
 VERSION=$(echo "$CONTENT" | grep "tag_name*" | cut -d : -f 2,3 | tr -d \" | tr -d , | sed 's/ //g')
