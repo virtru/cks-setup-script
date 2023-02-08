@@ -10,7 +10,7 @@ curl -s https://github.com/virtru-corp/cks-setup-script/blob/main/download.sh -o
 
 2. Run the download script with Bash
 
-`bash ./downnload.sh`
+`bash ./download.sh`
 
 3. Run the setup script with Bash
 
