@@ -7,9 +7,9 @@ NOCOLOR="\033[0m"
 RESET="\033[0m"
 CLEAR="\033c"
 
-CONTENT=$(curl -s https://api.github.com/repos/virtru-corp/cks-setup-script/releases/latest)
+CONTENT=$(curl -s https://api.github.com/repos/virtru/cks-setup-script/releases/latest)
 LATEST_TAG=$(echo "$CONTENT" | grep "tag_name*" | cut -d : -f 2,3 | tr -d \" | tr -d , | sed 's/ //g')
-LATEST_VERSION=$(curl -s https://raw.githubusercontent.com/virtru-corp/cks-setup-script/"$LATEST_TAG"/VERSION)
+LATEST_VERSION=$(curl -s https://raw.githubusercontent.com/virtru/cks-setup-script/"$LATEST_TAG"/VERSION)
 
 # Defaults
 PORT=9000
