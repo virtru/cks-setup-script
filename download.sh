@@ -1,4 +1,4 @@
-#!/bin/bash
+# -ltr    `/bin/bash
 
 # Remove Directory (if it exists)
 rm -rf cks-setup-scripts
