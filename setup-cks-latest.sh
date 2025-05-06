@@ -71,13 +71,8 @@ read -p "Define CKS URL (FQDN):
   Enter the URL the CKS will listen on.
   Enter URL [cks.domain.com]: " CKS_FQDN
 
-read -p "Enter the support email for your CKS Deployment: " SUPPORT_EMAIL
-read -p "Enter the support url for your CKS Deployment: " SUPPORT_URL
-
 printf "\nWORKING DIR is $WORKING_DIR\n"
 printf "CKS FQDN is $CKS_FQDN\n"
-printf "SUPPORT_EMAIL is $SUPPORT_EMAIL\n"
-printf "SUPPORT_URL is $SUPPORT_URL\n\n"
 
 l=0
 
@@ -180,25 +175,6 @@ printf "\tAuth\n"
 printf "\tJWT Enabled: %s\n" "$JWT_AUTH_ENABLED"
 printf "\tHMAC Enabled: %s\n" "$HMAC_AUTH_ENABLED"
 printf "\tVirtru Org ID: %s\n\n" "$JWT_AUTH_AUDIENCE"
-printf "\tTroubleshooting\n"
-printf "\tSupport URL: %s\n" $SUPPORT_URL
-printf "\tSupport Email: %s\n" $SUPPORT_EMAIL
-
-TOKEN_INFO=$(printf '{"support_url": "%s", "host": "%s", "admin_email": "%s", "auth": {"secret": "%s", "key": "%s"}}' "$SUPPORT_URL" "$CKS_FQDN" "$SUPPORT_EMAIL" "$SECRET_B64_FINAL" "$TOKEN_ID")
-
-# Create the Send to Virtru File
-mkdir -p cks_info
-
-if [ "$HMAC_AUTH_ENABLED" = true ]; then
-  touch ./cks_info/token_info.json
-  echo "$TOKEN_INFO" >> ./cks_info/token_info.json
-fi
-
-cp ./keys/rsa_001.pub ./cks_info/rsa_001.pub
-
-tar -zcvf send_to_virtru.tar.gz ./cks_info
-
-rm -rf ./cks_info
 
 # Create the Run File
 touch ./run.sh
