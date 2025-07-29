@@ -33,6 +33,24 @@ prompt () {
   done
 }
 
+# ECC vs RSA Prompt
+promptRsa () {
+  while true; do
+    read -p "Enter Key Type [RSA/ECC] (default RSA): " kt
+    # Default to RSA if input is empty
+    if [[ -z "$kt" ]]; then
+      return 0
+    fi
+
+    # Check user input
+    case $kt in
+      [Rr][Ss][Aa]* ) return 0;;
+      [Ee][Cc][Cc]* ) return 1;;
+      * ) echo "Please answer RSA or ECC.";;
+    esac
+  done
+}
+
 # Create Directory (prompt if exists to overwrite)
 mkdirCheck () {
  if [ -d "$1" ]; then
@@ -108,16 +126,43 @@ openssl req -x509 -newkey rsa:2048 -nodes -keyout ./ssl/${CKS_FQDN}.key -out ./s
 cat ./ssl/${CKS_FQDN}.key `find ./ssl/ -type f \( -name "${CKS_FQDN}*.csr" -or -name "${CKS_FQDN}*.crt" \)` `find ./ssl/ -type f \( ! -name "${CKS_FQDN}*" -and ! -name "ssl.pem" \)` > ./ssl/ssl.pem
 chmod 644 ./ssl/${CKS_FQDN}.key
 
-# Generate RSA Key Pair
-openssl genrsa -out ./keys/rsa_001.pem 2048
-openssl rsa -in ./keys/rsa_001.pem -outform PEM -pubout -out ./keys/rsa_001.pub
+# Generate ECC or RSA key pair based on user input
+if promptRsa; then
+  KEY_TYPE="RSA"
 
-FINGERPRINT=$(openssl rsa -in ./keys/rsa_001.pub -pubin -outform der | openssl dgst -sha256 -binary | base64)
-FINGERPRINT=$(echo ${FINGERPRINT//[+]/-})
-FINGERPRINT=$(echo ${FINGERPRINT//[\/]/_})
-FINGERPRINT=$(echo ${FINGERPRINT//[=]/''})
-chmod 644 ./keys/rsa_001.pem
-chmod 644 ./keys/rsa_001.pub
+  # Set Key Path for RSA
+  PRIV_KEY_PATH="./keys/rsa_001.pem"
+  PUB_KEY_PATH="./keys/rsa_001.pub"
+  # Generate RSA Key Pair
+  openssl genrsa -out $PRIV_KEY_PATH 2048
+  openssl rsa -in $PRIV_KEY_PATH -outform PEM -pubout -out $PUB_KEY_PATH
+  
+  FINGERPRINT=$(openssl rsa -in $PUB_KEY_PATH -pubin -outform der | openssl dgst -sha256 -binary | base64)
+  FINGERPRINT=$(echo ${FINGERPRINT//[+]/-})
+  FINGERPRINT=$(echo ${FINGERPRINT//[\/]/_})
+  FINGERPRINT=$(echo ${FINGERPRINT//[=]/''})
+
+  chmod 644 $PRIV_KEY_PATH
+  chmod 644 $PUB_KEY_PATH
+else
+  KEY_TYPE="ECC"
+
+  # Set Key Path for ECC
+  PRIV_KEY_PATH="./keys/ecc_p256_001.pem"
+  PUB_KEY_PATH="./keys/ecc_p256_001.pub"
+
+  # Generate an ECC Key Pair
+  openssl ecparam -name prime256v1 -genkey -noout | openssl pkcs8 -topk8 -nocrypt -out $PRIV_KEY_PATH
+  openssl ec -in $PRIV_KEY_PATH -pubout -out $PUB_KEY_PATH
+
+  FINGERPRINT=$(openssl ec -in $PUB_KEY_PATH -pubin -outform der | openssl dgst -sha256 -binary | base64)
+  FINGERPRINT=$(echo ${FINGERPRINT//[+]/-})
+  FINGERPRINT=$(echo ${FINGERPRINT//[\/]/_})
+  FINGERPRINT=$(echo ${FINGERPRINT//[=]/''})
+
+  chmod 644 $PRIV_KEY_PATH
+  chmod 644 $PUB_KEY_PATH
+fi
 
 SECRET_B64_FINAL=""
 TOKEN_ID=""
@@ -194,7 +239,11 @@ if [ "$HMAC_AUTH_ENABLED" = true ]; then
   echo "$TOKEN_INFO" >> ./cks_info/token_info.json
 fi
 
-cp ./keys/rsa_001.pub ./cks_info/rsa_001.pub
+if [ "$KEY_TYPE" = "ECC" ]; then
+  cp $PUB_KEY_PATH ./cks_info/ecc_p256_001.pub
+else 
+  cp $PUB_KEY_PATH ./cks_info/rsa_001.pub
+fi
 
 tar -zcvf send_to_virtru.tar.gz ./cks_info
 
