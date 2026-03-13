@@ -261,6 +261,8 @@ if [ "$KAS_ENABLED" = true ]; then
   printf "KAS_NAME=%s\n" "$KAS_NAME" >> ./env/cks.env
   printf "KAS_URI=%s\n" "$KAS_URI" >> ./env/cks.env
   printf "PLATFORM_ENDPOINT=%s\n" "$PLATFORM_ENDPOINT" >> ./env/cks.env
+  printf "ACM_ENDPOINT=%s\n" "https://api.virtru.com/acm/api" >> ./env/cks.env
+  printf "SECURE_ENCLAVE_ENDPOINT=%s\n" "https://api.virtru.com/secure-enclave/api" >> ./env/cks.env
   printf "WRAPPING_KEY_ID=%s\n" "kas-root-key" >> ./env/cks.env
   printf "KAS_TRUCTL_BIN=%s\n" "/usr/local/bin/kas" >> ./env/cks.env
 

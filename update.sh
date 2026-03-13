@@ -154,6 +154,8 @@ if [ "$KAS_ENABLED" = false ]; then
     updateEnvVariable "KAS_NAME" "$KAS_NAME"
     updateEnvVariable "KAS_URI" "$KAS_URI"
     updateEnvVariable "PLATFORM_ENDPOINT" "$PLATFORM_ENDPOINT"
+    updateEnvVariable "ACM_ENDPOINT" "https://api.virtru.com/acm/api"
+    updateEnvVariable "SECURE_ENCLAVE_ENDPOINT" "https://api.virtru.com/secure-enclave/api"
     updateEnvVariable "WRAPPING_KEY_ID" "kas-root-key"
     updateEnvVariable "KAS_TRUCTL_BIN" "/usr/local/bin/kas"
     updateEnvVariable "KAS_PROVISIONING_DELAY" "10"
