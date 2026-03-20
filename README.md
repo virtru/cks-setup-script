@@ -152,18 +152,6 @@ Caddy reverse proxy routes incoming traffic:
   docker exec Virtru_CKS supervisorctl status cks
   ```
 
-#### Checking Service Status
-
-```bash
-docker exec Virtru_CKS supervisorctl status
-```
-
-This shows the status of all services:
-- `postgres` - Database
-- `cks` - CKS application
-- `kas` - KAS service
-- `caddy` - Reverse proxy
-
 #### Viewing Service Logs
 
 ```bash
