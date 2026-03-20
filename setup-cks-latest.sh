@@ -23,11 +23,6 @@ JWT_AUTH_AUDIENCE=""
 
 # KAS defaults
 KAS_ENABLED=false
-KAS_NAME_DEFAULT="customer-kas"
-KAS_PROVISIONING_DELAY_DEFAULT=10
-KAS_RETRY_ATTEMPTS_DEFAULT=8
-KAS_RETRY_BACKOFF_DEFAULT=2
-KAS_RETRY_BACKOFF_MAX_DEFAULT=30
 
 # Yes or No Prompt
 prompt () {
@@ -127,17 +122,7 @@ if prompt "Do you want to enable KAS [yes/no]?"; then
   # Set KAS configuration (no prompts needed - use standard values)
   KAS_AUTH_ISSUER="https://login.virtru.com/oauth2/default"
   KAS_AUTH_AUDIENCE="https://api.virtru.com"
-  PLATFORM_ENDPOINT="http://localhost:8080"
-  KAS_NAME="customer-kas"
   KAS_URI="https://${CKS_FQDN}"
-
-  # Optional OAuth credentials for provisioning
-  printf "\n${BOLD}Provisioning Configuration (optional)${RESET}\n"
-  printf "You can provide OAuth credentials now or configure them later.\n\n"
-  read -p "Enter OAuth Client ID for provisioning (leave blank to skip): " OKTA_CLIENT_ID
-  read -s -p "Enter OAuth Client Secret for provisioning (leave blank to skip): " OKTA_CLIENT_SECRET
-  echo ""
-  echo ""
 fi
 
 printf "\nRequests from Virtru to your CKS are authenticated with JWTs.\n"
@@ -257,20 +242,10 @@ if [ "$KAS_ENABLED" = true ]; then
   printf "ORG_ID=%s\n" "$JWT_AUTH_AUDIENCE" >> ./env/cks.env
   printf "KAS_AUTH_ISSUER=%s\n" "$KAS_AUTH_ISSUER" >> ./env/cks.env
   printf "KAS_AUTH_AUDIENCE=%s\n" "$KAS_AUTH_AUDIENCE" >> ./env/cks.env
-  printf "KAS_TOKEN_SCOPE=%s\n" "api:access:read api:access:write" >> ./env/cks.env
-  printf "KAS_NAME=%s\n" "$KAS_NAME" >> ./env/cks.env
   printf "KAS_URI=%s\n" "$KAS_URI" >> ./env/cks.env
-  printf "PLATFORM_ENDPOINT=%s\n" "$PLATFORM_ENDPOINT" >> ./env/cks.env
   printf "ACM_ENDPOINT=%s\n" "https://api.virtru.com/acm/api" >> ./env/cks.env
   printf "SECURE_ENCLAVE_ENDPOINT=%s\n" "https://api.virtru.com/secure-enclave/api" >> ./env/cks.env
   printf "WRAPPING_KEY_ID=%s\n" "kas-root-key" >> ./env/cks.env
-  printf "KAS_TRUCTL_BIN=%s\n" "/usr/local/bin/kas" >> ./env/cks.env
-
-  # KAS Provisioning Configuration
-  printf "KAS_PROVISIONING_DELAY=%s\n" "$KAS_PROVISIONING_DELAY_DEFAULT" >> ./env/cks.env
-  printf "KAS_RETRY_ATTEMPTS=%s\n" "$KAS_RETRY_ATTEMPTS_DEFAULT" >> ./env/cks.env
-  printf "KAS_RETRY_BACKOFF=%s\n" "$KAS_RETRY_BACKOFF_DEFAULT" >> ./env/cks.env
-  printf "KAS_RETRY_BACKOFF_MAX=%s\n" "$KAS_RETRY_BACKOFF_MAX_DEFAULT" >> ./env/cks.env
 
   # KAS Logging Configuration
   printf "KAS_LOG_LEVEL=%s\n" "debug" >> ./env/cks.env
@@ -286,12 +261,7 @@ if [ "$KAS_ENABLED" = true ]; then
   printf "DSP_DB_SSLMODE=%s\n" "prefer" >> ./env/cks.env
   printf "DSP_DB_SCHEMA=%s\n" "dsp" >> ./env/cks.env
 
-  # OAuth Credentials for Provisioning (may be empty)
-  printf "CLIENT_ID=%s\n" "$OKTA_CLIENT_ID" >> ./env/cks.env
-  printf "CLIENT_SECRET=%s\n" "$OKTA_CLIENT_SECRET" >> ./env/cks.env
-
-  # Key Configuration for Provisioning
-  printf "KEY_ID=%s\n" "kas-imported-key" >> ./env/cks.env
+  # Key Configuration
   if [ "$KEY_TYPE" = "ECC" ]; then
     printf "KEY_ALGORITHM=%s\n" "ec:p256" >> ./env/cks.env
     printf "KAS_PUBLIC_KEY_FILE=/app/keys/ecc_p256_001.pub\n" >> ./env/cks.env
@@ -327,9 +297,7 @@ if [ "$KAS_ENABLED" = true ]; then
   printf "\tKAS Enabled: true\n"
   printf "\tKAS Auth Issuer: %s\n" "$KAS_AUTH_ISSUER"
   printf "\tKAS Auth Audience: %s\n" "$KAS_AUTH_AUDIENCE"
-  printf "\tKAS Registry Name: %s\n" "$KAS_NAME"
-  printf "\tKAS URI: %s\n" "$KAS_URI"
-  printf "\tPlatform Endpoint: %s\n\n" "$PLATFORM_ENDPOINT"
+  printf "\tKAS URI: %s\n\n" "$KAS_URI"
 fi
 
 printf "\tTroubleshooting\n"
@@ -363,18 +331,3 @@ chmod +x ./run.sh
 # Generate run.sh (always uses port 9000 via Caddy, no "serve" arg - supervisord manages processes)
 echo "docker run --name Virtru_CKS --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:9000 --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl containers.virtru.com/cks:v"$CKS_VERSION"" > ./run.sh
 
-# Add KAS provisioning instructions if KAS is enabled
-if [ "$KAS_ENABLED" = true ]; then
-  printf "\n\n${GREEN}KAS Provisioning:${RESET}\n"
-  if [ -z "$OKTA_CLIENT_ID" ] || [ -z "$OKTA_CLIENT_SECRET" ]; then
-    printf "  ${RED}! OAuth credentials not provided.${RESET}\n"
-    printf "  To enable automatic KAS provisioning:\n"
-    printf "  1. Edit %s/env/cks.env\n" "$WORKING_DIR"
-    printf "  2. Set CLIENT_ID and CLIENT_SECRET values\n"
-    printf "  3. Restart the container\n"
-    printf "  4. Check logs: docker logs Virtru_CKS\n\n"
-  else
-    printf "  OAuth credentials provided. KAS will auto-provision on startup.\n"
-    printf "  Monitor progress: docker logs -f Virtru_CKS\n\n"
-  fi
-fi

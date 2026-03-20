@@ -109,8 +109,6 @@ if [ "$KAS_ENABLED" = false ]; then
     # Set KAS configuration (no prompts needed - use standard values)
     KAS_AUTH_ISSUER="https://login.virtru.com/oauth2/default"
     KAS_AUTH_AUDIENCE="https://api.virtru.com"
-    PLATFORM_ENDPOINT="http://localhost:8080"
-    KAS_NAME="customer-kas"
 
     # Get CKS FQDN from existing SSL certificate for KAS_URI
     CKS_FQDN=$(find "$WORKING_DIR"/ssl/ -name "*.crt" -not -name "ssl.pem" 2>/dev/null | head -1 | xargs basename -s .crt 2>/dev/null)
@@ -118,13 +116,6 @@ if [ "$KAS_ENABLED" = false ]; then
       CKS_FQDN="localhost"
     fi
     KAS_URI="https://${CKS_FQDN}"
-
-    # Optional OAuth credentials
-    printf "\n${BOLD}Provisioning Configuration (optional):${RESET}\n"
-    read -p "Enter OAuth Client ID for provisioning (leave blank to skip): " OKTA_CLIENT_ID
-    read -s -p "Enter OAuth Client Secret for provisioning (leave blank to skip): " OKTA_CLIENT_SECRET
-    echo ""
-    echo ""
 
     # Generate KAS_ROOT_KEY
     KAS_ROOT_KEY=$(openssl rand -hex 32)
@@ -150,18 +141,10 @@ if [ "$KAS_ENABLED" = false ]; then
     updateEnvVariable "ORG_ID" "$EXISTING_ORG_ID"
     updateEnvVariable "KAS_AUTH_ISSUER" "$KAS_AUTH_ISSUER"
     updateEnvVariable "KAS_AUTH_AUDIENCE" "$KAS_AUTH_AUDIENCE"
-    updateEnvVariable "KAS_TOKEN_SCOPE" "api:access:read api:access:write"
-    updateEnvVariable "KAS_NAME" "$KAS_NAME"
     updateEnvVariable "KAS_URI" "$KAS_URI"
-    updateEnvVariable "PLATFORM_ENDPOINT" "$PLATFORM_ENDPOINT"
     updateEnvVariable "ACM_ENDPOINT" "https://api.virtru.com/acm/api"
     updateEnvVariable "SECURE_ENCLAVE_ENDPOINT" "https://api.virtru.com/secure-enclave/api"
     updateEnvVariable "WRAPPING_KEY_ID" "kas-root-key"
-    updateEnvVariable "KAS_TRUCTL_BIN" "/usr/local/bin/kas"
-    updateEnvVariable "KAS_PROVISIONING_DELAY" "10"
-    updateEnvVariable "KAS_RETRY_ATTEMPTS" "8"
-    updateEnvVariable "KAS_RETRY_BACKOFF" "2"
-    updateEnvVariable "KAS_RETRY_BACKOFF_MAX" "30"
 
     # KAS Logging
     updateEnvVariable "KAS_LOG_LEVEL" "debug"
@@ -177,10 +160,6 @@ if [ "$KAS_ENABLED" = false ]; then
     updateEnvVariable "DSP_DB_SSLMODE" "prefer"
     updateEnvVariable "DSP_DB_SCHEMA" "dsp"
 
-    # Provisioning credentials
-    updateEnvVariable "CLIENT_ID" "$OKTA_CLIENT_ID"
-    updateEnvVariable "CLIENT_SECRET" "$OKTA_CLIENT_SECRET"
-    updateEnvVariable "KEY_ID" "kas-imported-key"
     updateEnvVariable "KEY_ALGORITHM" "$KEY_ALGORITHM"
     updateEnvVariable "KAS_PUBLIC_KEY_FILE" "$KEY_PUBLIC_FILE"
     updateEnvVariable "KAS_PRIVATE_KEY_FILE" "$KEY_PRIVATE_FILE"
@@ -225,15 +204,3 @@ printf "  2. Remove the old container: ${BOLD}docker rm $CONTAINER_NAME${RESET}\
 printf "  3. Start the new container: ${BOLD}bash $WORKING_DIR/run.sh${RESET}\n"
 printf "  4. Monitor logs: ${BOLD}docker logs -f $CONTAINER_NAME${RESET}\n\n"
 
-# Additional KAS provisioning instructions if newly enabled
-if [ "$KAS_ENABLED" = true ]; then
-  printf "${GREEN}KAS Provisioning:${RESET}\n"
-  if [ -z "$OKTA_CLIENT_ID" ] || [ -z "$OKTA_CLIENT_SECRET" ]; then
-    printf "  ${RED}! OAuth credentials not configured.${RESET}\n"
-    printf "  To enable auto-provisioning, edit $WORKING_DIR/env/cks.env\n"
-    printf "  and set CLIENT_ID and CLIENT_SECRET, then restart the container.\n\n"
-  else
-    printf "  OAuth credentials configured. KAS will auto-provision on startup.\n"
-    printf "  Check provisioning status in the logs.\n\n"
-  fi
-fi
