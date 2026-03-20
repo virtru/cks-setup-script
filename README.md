@@ -143,14 +143,8 @@ Caddy reverse proxy routes incoming traffic:
 **Symptom:** CKS endpoints return errors or timeout
 
 **Solution:**
-- Verify Caddy reverse proxy is running:
-  ```bash
-  docker exec Virtru_CKS supervisorctl status caddy
-  ```
-- Check CKS service status:
-  ```bash
-  docker exec Virtru_CKS supervisorctl status cks
-  ```
+- Review container logs: `docker logs Virtru_CKS`
+- Verify SSL certificates are valid and properly mounted
 
 #### Viewing Service Logs
 
