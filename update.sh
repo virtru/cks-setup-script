@@ -56,9 +56,10 @@ printf "${CLEAR}${GREEN}****************************************\n              
 printf "The latest version of CKS is $LATEST_VERSION.\n\n"
 
 read -p "Enter CKS Version: " CKS_VERSION
+CKS_VERSION="${CKS_VERSION#v}"
 
 # Verify that the version of CKS exists in Docker
-STATUS=$(curl -sI https://hub.docker.com/v2/namespaces/virtru/repositories/cks/tags/"v$CKS_VERSION" | head -n 1 | cut -d$' ' -f2)
+STATUS=$(curl -sI https://containers.virtru.com/v2/cks/manifests/"v$CKS_VERSION" | head -n 1 | cut -d$' ' -f2)
 
 if [ $STATUS -ne 200 ]; then
   echo "Invalid CKS Version"
