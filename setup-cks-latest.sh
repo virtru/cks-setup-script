@@ -244,7 +244,7 @@ if [ "$KAS_ENABLED" = true ]; then
   printf "KAS_AUTH_AUDIENCE=%s\n" "$KAS_AUTH_AUDIENCE" >> ./env/cks.env
   printf "KAS_URI=%s\n" "$KAS_URI" >> ./env/cks.env
   printf "ACM_ENDPOINT=%s\n" "https://api.virtru.com/acm/api" >> ./env/cks.env
-  printf "SECURE_ENCLAVE_ENDPOINT=%s\n" "https://api.virtru.com/secure-enclave/api" >> ./env/cks.env
+  printf "DATA_HARBOR_ENDPOINT=%s\n" "https://api.virtru.com/data-harbor/api" >> ./env/cks.env
   printf "WRAPPING_KEY_ID=%s\n" "kas-root-key" >> ./env/cks.env
 
   # KAS Logging Configuration

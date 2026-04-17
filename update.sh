@@ -140,7 +140,7 @@ if [ "$KAS_ENABLED" = false ]; then
     updateEnvVariable "KAS_AUTH_AUDIENCE" "$KAS_AUTH_AUDIENCE"
     updateEnvVariable "KAS_URI" "$KAS_URI"
     updateEnvVariable "ACM_ENDPOINT" "https://api.virtru.com/acm/api"
-    updateEnvVariable "SECURE_ENCLAVE_ENDPOINT" "https://api.virtru.com/secure-enclave/api"
+    updateEnvVariable "DATA_HARBOR_ENDPOINT" "https://api.virtru.com/data-harbor/api"
     updateEnvVariable "WRAPPING_KEY_ID" "kas-root-key"
 
     # KAS Logging
