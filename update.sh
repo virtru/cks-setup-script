@@ -169,6 +169,17 @@ if [ "$KAS_ENABLED" = false ]; then
   fi
 fi
 
+# Prompt for SaaS-provisioned KEY_ID if KAS is enabled but KEY_ID isn't set yet
+# (covers both fresh KAS migrations and upgrades of older KAS deployments).
+# Use anchored grep so we don't false-match WRAPPING_KEY_ID.
+if [ "$KAS_ENABLED" = true ] && ! grep -q "^KEY_ID=" "$WORKING_DIR"/env/cks.env; then
+  KEY_ID=""
+  while [ -z "$KEY_ID" ]; do
+    read -p "Enter the Key ID used to provision this CKS: " KEY_ID
+  done
+  echo "KEY_ID=$KEY_ID" >> "$WORKING_DIR"/env/cks.env
+fi
+
 KEY_PROVIDER_TYPE=$(cat "$WORKING_DIR"/env/cks.env | grep KEY_PROVIDER_TYPE | cut -d "=" -f2)
 
 # Generate Docker run command (always uses port 9000 via Caddy, no "serve" arg)

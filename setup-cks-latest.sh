@@ -123,6 +123,11 @@ if prompt "Do you want to enable KAS [yes/no]?"; then
   KAS_AUTH_ISSUER="https://login.virtru.com/oauth2/default"
   KAS_AUTH_AUDIENCE="https://api.virtru.com"
   KAS_URI="https://${CKS_FQDN}"
+
+  KEY_ID=""
+  while [ -z "$KEY_ID" ]; do
+    read -p "Enter the Key ID used to provision this CKS: " KEY_ID
+  done
 fi
 
 printf "\nRequests from Virtru to your CKS are authenticated with JWTs.\n"
@@ -246,6 +251,7 @@ if [ "$KAS_ENABLED" = true ]; then
   printf "ACM_ENDPOINT=%s\n" "https://api.virtru.com/acm/api" >> ./env/cks.env
   printf "DATA_HARBOR_ENDPOINT=%s\n" "https://api.virtru.com/data-harbor/api" >> ./env/cks.env
   printf "WRAPPING_KEY_ID=%s\n" "kas-root-key" >> ./env/cks.env
+  printf "KEY_ID=%s\n" "$KEY_ID" >> ./env/cks.env
 
   # KAS Logging Configuration
   printf "KAS_LOG_LEVEL=%s\n" "debug" >> ./env/cks.env
