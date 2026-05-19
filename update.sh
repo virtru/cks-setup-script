@@ -161,23 +161,36 @@ if [ "$KAS_ENABLED" = false ]; then
     updateEnvVariable "KAS_PUBLIC_KEY_FILE" "$KEY_PUBLIC_FILE"
     updateEnvVariable "KAS_PRIVATE_KEY_FILE" "$KEY_PRIVATE_FILE"
 
-    # CKS always runs on internal port 3000 (Caddy exposes 9000)
-    updateEnvVariable "PORT" "3000"
+    # Caddy fronts traffic on 9000; supervisord pins CKS Node to 3000 internally.
+    # PORT here mirrors the chart's configmap value so cks.env stays aligned.
+    updateEnvVariable "PORT" "9000"
     updateEnvVariable "JWT_AUTH_ISSUER" "$KAS_AUTH_ISSUER"
 
     printf "\n${GREEN}KAS configuration added successfully.${RESET}\n\n"
   fi
 fi
 
-# Prompt for SaaS-provisioned KEY_ID if KAS is enabled but KEY_ID isn't set yet
-# (covers both fresh KAS migrations and upgrades of older KAS deployments).
-# Use anchored grep so we don't false-match WRAPPING_KEY_ID.
-if [ "$KAS_ENABLED" = true ] && ! grep -q "^KEY_ID=" "$WORKING_DIR"/env/cks.env; then
-  KEY_ID=""
-  while [ -z "$KEY_ID" ]; do
-    read -p "Enter the Key ID used to provision this CKS: " KEY_ID
-  done
-  echo "KEY_ID=$KEY_ID" >> "$WORKING_DIR"/env/cks.env
+# Ensure KAS deployments have a KEY_ID set in cks.env.
+# Preserve the existing value when present (covers KAS deployments that were
+# already provisioned); otherwise prompt the operator for the SaaS-provisioned
+# Key ID. Anchored grep avoids a false match on WRAPPING_KEY_ID.
+if [ "$KAS_ENABLED" = true ]; then
+  EXISTING_KEY_ID=$(grep '^KEY_ID=' "$WORKING_DIR"/env/cks.env 2>/dev/null | cut -d "=" -f2-)
+
+  if [ -z "$EXISTING_KEY_ID" ]; then
+    KEY_ID=""
+    while [ -z "$KEY_ID" ]; do
+      read -p "Enter the Virtru SaaS DSP Key ID for this KAS deployment: " KEY_ID
+
+      if [ -z "$KEY_ID" ]; then
+        printf "KEY_ID is required for KAS deployments.\n"
+      fi
+    done
+  else
+    KEY_ID="$EXISTING_KEY_ID"
+  fi
+
+  updateEnvVariable "KEY_ID" "$KEY_ID"
 fi
 
 KEY_PROVIDER_TYPE=$(cat "$WORKING_DIR"/env/cks.env | grep KEY_PROVIDER_TYPE | cut -d "=" -f2)

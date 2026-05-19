@@ -23,6 +23,7 @@ JWT_AUTH_AUDIENCE=""
 
 # KAS defaults
 KAS_ENABLED=false
+KEY_ID=""
 
 # Yes or No Prompt
 prompt () {
@@ -124,9 +125,12 @@ if prompt "Do you want to enable KAS [yes/no]?"; then
   KAS_AUTH_AUDIENCE="https://api.virtru.com"
   KAS_URI="https://${CKS_FQDN}"
 
-  KEY_ID=""
   while [ -z "$KEY_ID" ]; do
-    read -p "Enter the Key ID used to provision this CKS: " KEY_ID
+    read -p "Enter the Virtru SaaS DSP Key ID for this KAS deployment: " KEY_ID
+
+    if [ -z "$KEY_ID" ]; then
+      printf "KEY_ID is required for KAS deployments.\n"
+    fi
   done
 fi
 
@@ -219,8 +223,9 @@ fi
 touch ./env/cks.env
 
 # Write the Environment File
-# CKS always runs on port 3000 internally (Caddy proxies on 9000 externally)
-printf "PORT=3000\n" >> ./env/cks.env
+# Caddy fronts traffic on 9000; supervisord pins CKS Node to 3000 internally.
+# PORT here mirrors the chart's configmap value so cks.env stays aligned.
+printf "PORT=9000\n" >> ./env/cks.env
 
 printf "LOG_RSYSLOG_ENABLED=%s\n" $LOG_RSYS_ENABLED >> ./env/cks.env
 printf "LOG_CONSOLE_ENABLED=%s\n" $LOG_CONSOLE_ENABLED >> ./env/cks.env
