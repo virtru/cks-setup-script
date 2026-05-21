@@ -47,7 +47,7 @@ Do you want to enable KAS [yes/no]?
 Answer **yes** to enable KAS. The setup will automatically configure KAS with standard settings:
 - OAuth Issuer: `https://login.virtru.com/oauth2/default`
 - OAuth Audience: `https://api.virtru.com`
-- KAS URI: Same as your CKS URL (derived from SSL certificate)
+- KAS URI: Same as your CKS URL (set from the FQDN you provide during setup; the update script infers it from your existing SSL certificate)
 
 KAS will automatically bootstrap itself on startup — it registers with the DSP platform, creates the necessary namespace, attributes, and imports keys. No manual provisioning steps or OAuth client credentials are required.
 

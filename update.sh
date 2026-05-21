@@ -14,7 +14,7 @@ KEY_PROVIDER_PATH="/app/keys"
 
 envVariableNotSet () {
   VARIABLE=$1
-  LINE="$(awk "/${1}/{ print NR; exit }" "$WORKING_DIR"/env/cks.env)"
+  LINE="$(awk "/^${1}=/{ print NR; exit }" "$WORKING_DIR"/env/cks.env)"
 
   if [ -z "$LINE" ]; then
     return 0
@@ -26,7 +26,7 @@ envVariableNotSet () {
 updateEnvVariable () {
   VARIABLE=$1
   VALUE=$2
-  LINE="$(awk "/${1}/{ print NR; exit }" "$WORKING_DIR"/env/cks.env)"
+  LINE="$(awk "/^${1}=/{ print NR; exit }" "$WORKING_DIR"/env/cks.env)"
 
   if [ -z "$LINE" ]; then
     echo "$VARIABLE=$VALUE" >> "$WORKING_DIR"/env/cks.env
@@ -131,7 +131,14 @@ if [ "$KAS_ENABLED" = false ]; then
     fi
 
     # Get existing Org ID from JWT_AUTH_AUDIENCE
-    EXISTING_ORG_ID=$(cat "$WORKING_DIR"/env/cks.env | grep JWT_AUTH_AUDIENCE | cut -d "=" -f2)
+    EXISTING_ORG_ID=$(grep '^JWT_AUTH_AUDIENCE=' "$WORKING_DIR"/env/cks.env 2>/dev/null | cut -d "=" -f2-)
+
+    if [ -z "$EXISTING_ORG_ID" ]; then
+      printf "KAS requires an Org ID but JWT_AUTH_AUDIENCE is not set in cks.env.\n"
+      while [ -z "$EXISTING_ORG_ID" ]; do
+        read -p "Enter your Virtru Org ID: " EXISTING_ORG_ID
+      done
+    fi
 
     # Add KAS environment variables
     updateEnvVariable "KAS_ROOT_KEY" "$KAS_ROOT_KEY"
@@ -198,7 +205,6 @@ KEY_PROVIDER_TYPE=$(cat "$WORKING_DIR"/env/cks.env | grep KEY_PROVIDER_TYPE | cu
 # Generate Docker run command (always uses port 9000 via Caddy, no "serve" arg)
 DOCKER_IMAGE="containers.virtru.com/cks:v$CKS_VERSION"
 CONTAINER_NAME="Virtru_CKS"
-OLD_CONTAINER_NAME="Virtru_CKS"
 EXTERNAL_PORT=9000  # Caddy always exposes port 9000
 
 if [ "$KEY_PROVIDER_TYPE" = "hsm" ]; then
