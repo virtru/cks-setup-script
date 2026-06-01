@@ -155,8 +155,8 @@ if promptRsa; then
   KEY_TYPE="RSA"
 
   # Set Key Path for RSA
-  PRIV_KEY_PATH="./keys/rsa_001.pem"
-  PUB_KEY_PATH="./keys/rsa_001.pub"
+  PRIV_KEY_PATH="./keys/rsa001.pem"
+  PUB_KEY_PATH="./keys/rsa001.pub"
   # Generate RSA Key Pair
   openssl genrsa -out $PRIV_KEY_PATH 2048
   openssl rsa -in $PRIV_KEY_PATH -outform PEM -pubout -out $PUB_KEY_PATH
@@ -278,8 +278,8 @@ if [ "$KAS_ENABLED" = true ]; then
     printf "KAS_PRIVATE_KEY_FILE=/app/keys/ecc_p256_001.pem\n" >> ./env/cks.env
   else
     printf "KEY_ALGORITHM=%s\n" "rsa:2048" >> ./env/cks.env
-    printf "KAS_PUBLIC_KEY_FILE=/app/keys/rsa_001.pub\n" >> ./env/cks.env
-    printf "KAS_PRIVATE_KEY_FILE=/app/keys/rsa_001.pem\n" >> ./env/cks.env
+    printf "KAS_PUBLIC_KEY_FILE=/app/keys/rsa001.pub\n" >> ./env/cks.env
+    printf "KAS_PRIVATE_KEY_FILE=/app/keys/rsa001.pem\n" >> ./env/cks.env
   fi
 
   # Update JWT_AUTH_ISSUER to match KAS_AUTH_ISSUER for consistency
@@ -327,7 +327,7 @@ fi
 if [ "$KEY_TYPE" = "ECC" ]; then
   cp $PUB_KEY_PATH ./cks_info/ecc_p256_001.pub
 else 
-  cp $PUB_KEY_PATH ./cks_info/rsa_001.pub
+  cp $PUB_KEY_PATH ./cks_info/rsa001.pub
 fi
 
 tar -zcvf send_to_virtru.tar.gz ./cks_info
