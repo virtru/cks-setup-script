@@ -126,8 +126,8 @@ if [ "$KAS_ENABLED" = false ]; then
     else
       KEY_TYPE="RSA"
       KEY_ALGORITHM="rsa:2048"
-      KEY_PUBLIC_FILE="/app/keys/rsa001.pub"
-      KEY_PRIVATE_FILE="/app/keys/rsa001.pem"
+      KEY_PUBLIC_FILE="/app/keys/rsa_001.pub"
+      KEY_PRIVATE_FILE="/app/keys/rsa_001.pem"
     fi
 
     # Get existing Org ID from JWT_AUTH_AUDIENCE
