@@ -29,13 +29,12 @@ prompt () {
 updateEnvVariable () {
   VARIABLE=$1
   VALUE=$2
-  LINE="$(awk "/${1}/{ print NR; exit }" "$WORKING_DIR"/env/cks.env)"
+  LINE="$(awk "/^${VARIABLE}=/{ print NR; exit }" "$WORKING_DIR"/env/cks.env)"
 
   if [ -z "$LINE" ]; then
     echo "$VARIABLE=$VALUE" >> "$WORKING_DIR"/env/cks.env
   else
-    LINE="$LINE"s
-    sed -i '.bak' "$LINE|.*|$VARIABLE=$VALUE|" "$WORKING_DIR"/env/cks.env
+    sed -i "${LINE}s|.*|${VARIABLE}=${VALUE}|" "$WORKING_DIR"/env/cks.env
   fi
 }
 
@@ -78,12 +77,12 @@ KEY_PROVIDER_TYPE=hsm
 CRYPTO_OPERATIONS_TYPE=hsm
 
 # SoftHSM2 Config (Test Mode)
-if [ $CKS_HSM_TEST_MODE = "1" ]; then
+if [ "${CKS_HSM_TEST_MODE:-0}" = "1" ]; then
   PKCS11_LIB_NAME=SoftHSM2
   PKCS11_LIB_PATH=/usr/lib/softhsm/libsofthsm2.so
 fi
 
-docker run -e HSM_IP="$HSM_IP" -e PKCS11_VENDOR="$PKCS11_VENDOR" -e PKCS11_LIB_NAME="$PKCS11_LIB_NAME" -e PKCS11_LIB_PATH="$PKCS11_LIB_PATH" -e PKCS11_SLOT_LBL="$PKCS11_SLOT_LBL" -e PKCS11_KEY_LBL="$PKCS11_KEY_LBL" -e PKCS11_PIN="$PKCS11_PIN" -e KEY_PROVIDER_TYPE="$KEY_PROVIDER_TYPE" -e CRYPTO_OPERATIONS_TYPE="$CRYPTO_OPERATIONS_TYPE" --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt containers.virtru.com/cks:v"$CKS_VERSION" list-keys
+docker run --rm -e HSM_IP="$HSM_IP" -e PKCS11_VENDOR="$PKCS11_VENDOR" -e PKCS11_LIB_NAME="$PKCS11_LIB_NAME" -e PKCS11_LIB_PATH="$PKCS11_LIB_PATH" -e PKCS11_SLOT_LBL="$PKCS11_SLOT_LBL" -e PKCS11_KEY_LBL="$PKCS11_KEY_LBL" -e PKCS11_PIN="$PKCS11_PIN" -e KEY_PROVIDER_TYPE="$KEY_PROVIDER_TYPE" -e CRYPTO_OPERATIONS_TYPE="$CRYPTO_OPERATIONS_TYPE" --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt containers.virtru.com/cks:v"$CKS_VERSION" list-keys
 
 if prompt "Did the CKS successfully list the keys? Please enter yes or no."; then
   echo "Updating the environment file at $WORKING_DIR/env/cks.env."
@@ -100,9 +99,13 @@ if prompt "Did the CKS successfully list the keys? Please enter yes or no."; the
 
   echo "Setup of HSM complete"
 
-  if [ $PKCS11_LIB_NAME = "CloudHSM" ]; then
-    echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt containers.virtru.com/cks:v"$CKS_VERSION" serve" > "$WORKING_DIR/run.sh"
+  if [ "$PKCS11_LIB_NAME" = "CloudHSM" ]; then
+    cat > "$WORKING_DIR/run.sh" <<EOF
+docker run --name Virtru_CKS --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt containers.virtru.com/cks:v"$CKS_VERSION"
+EOF
   else
-    echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl containers.virtru.com/cks:v"$CKS_VERSION" serve" > "$WORKING_DIR/run.sh"
+    cat > "$WORKING_DIR/run.sh" <<EOF
+docker run --name Virtru_CKS --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl containers.virtru.com/cks:v"$CKS_VERSION"
+EOF
   fi
 fi
