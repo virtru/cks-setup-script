@@ -18,6 +18,7 @@ KEY_PROVIDER_TYPE="file"
 KEY_PROVIDER_PATH="/app/keys"
 HMAC_AUTH_ENABLED=false
 JWT_AUTH_ENABLED=true
+JWT_AUTH_ISSUER="https://api.virtru.com"
 JWT_AUTH_AUDIENCE=""
 
 # KAS defaults
@@ -241,6 +242,7 @@ if [ "$HMAC_AUTH_ENABLED" = true ]; then
 fi
 
 if [ "$JWT_AUTH_ENABLED" = true ]; then
+  printf "JWT_AUTH_ISSUER=%s\n" "$JWT_AUTH_ISSUER" >> ./env/cks.env
   printf "JWT_AUTH_AUDIENCE=%s\n" $JWT_AUTH_AUDIENCE >> ./env/cks.env
 fi
 
@@ -281,9 +283,6 @@ if [ "$KAS_ENABLED" = true ]; then
     printf "KAS_PUBLIC_KEY_FILE=/app/keys/rsa_001.pub\n" >> ./env/cks.env
     printf "KAS_PRIVATE_KEY_FILE=/app/keys/rsa_001.pem\n" >> ./env/cks.env
   fi
-
-  # Update JWT_AUTH_ISSUER to match KAS_AUTH_ISSUER for consistency
-  printf "JWT_AUTH_ISSUER=%s\n" "$KAS_AUTH_ISSUER" >> ./env/cks.env
 fi
 
 # Print Summary
