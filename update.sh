@@ -11,6 +11,7 @@ CLEAR="\033c"
 # Defaults
 PORT=9000
 KEY_PROVIDER_PATH="/app/keys"
+JWT_AUTH_ISSUER="https://api.virtru.com"
 
 envVariableNotSet () {
   VARIABLE=$1
@@ -85,6 +86,7 @@ if envVariableNotSet "JWT_AUTH_ENABLED"; then
     read -p "Enter your Virtru Org ID: " JWT_AUTH_AUDIENCE
 
     updateEnvVariable "JWT_AUTH_ENABLED" "true"
+    updateEnvVariable "JWT_AUTH_ISSUER" "$JWT_AUTH_ISSUER"
     updateEnvVariable "JWT_AUTH_AUDIENCE" "$JWT_AUTH_AUDIENCE"
   fi
 fi
@@ -171,7 +173,6 @@ if [ "$KAS_ENABLED" = false ]; then
     # Caddy fronts traffic on 9000; supervisord pins CKS Node to 3000 internally.
     # PORT here mirrors the chart's configmap value so cks.env stays aligned.
     updateEnvVariable "PORT" "9000"
-    updateEnvVariable "JWT_AUTH_ISSUER" "$KAS_AUTH_ISSUER"
 
     printf "\n${GREEN}KAS configuration added successfully.${RESET}\n\n"
   fi
@@ -182,6 +183,9 @@ fi
 # already provisioned); otherwise prompt the operator for the SaaS-provisioned
 # Key ID. Anchored grep avoids a false match on WRAPPING_KEY_ID.
 if [ "$KAS_ENABLED" = true ]; then
+  # CKS request authentication and KAS OIDC authentication use different issuers.
+  updateEnvVariable "JWT_AUTH_ISSUER" "$JWT_AUTH_ISSUER"
+
   EXISTING_KEY_ID=$(grep '^KEY_ID=' "$WORKING_DIR"/env/cks.env 2>/dev/null | cut -d "=" -f2-)
 
   if [ -z "$EXISTING_KEY_ID" ]; then
