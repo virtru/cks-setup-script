@@ -88,9 +88,9 @@ DOCKER_IMAGE="containers.virtru.com/cks:v$CKS_VERSION"
 CONTAINER_NAME="Virtru_CKS"
 
 if [ "$KEY_PROVIDER_TYPE" = "hsm" ]; then
-  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt $DOCKER_IMAGE serve" > "$WORKING_DIR/run.sh"
+  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt $DOCKER_IMAGE" > "$WORKING_DIR/run.sh"
 else
-  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl $DOCKER_IMAGE serve" > "$WORKING_DIR/run.sh"
+  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl $DOCKER_IMAGE" > "$WORKING_DIR/run.sh"
 fi
 
 chmod +x "$WORKING_DIR/run.sh"
