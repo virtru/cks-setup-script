@@ -7,10 +7,6 @@ NOCOLOR="\033[0m"
 RESET="\033[0m"
 CLEAR="\033c"
 
-CONTENT=$(curl -s https://api.github.com/repos/virtru/cks-setup-script/releases/latest)
-LATEST_TAG=$(echo "$CONTENT" | grep "tag_name*" | cut -d : -f 2,3 | tr -d \" | tr -d , | sed 's/ //g')
-LATEST_VERSION=$(curl -s https://raw.githubusercontent.com/virtru/cks-setup-script/"$LATEST_TAG"/VERSION)
-
 # Defaults
 PORT=9000
 KEY_PROVIDER_PATH="/app/keys"
@@ -54,8 +50,6 @@ prompt () {
 
 printf "${CLEAR}${GREEN}****************************************\n               UPDATE CKS\n****************************************\n${RESET}\n"
 
-printf "The latest version of CKS is $LATEST_VERSION.\n\n"
-
 read -p "Enter CKS Version: " CKS_VERSION
 CKS_VERSION="${CKS_VERSION#v}"
 
@@ -90,10 +84,24 @@ fi
 
 KEY_PROVIDER_TYPE=$(cat "$WORKING_DIR"/env/cks.env | grep KEY_PROVIDER_TYPE | cut -d "=" -f2)
 
+DOCKER_IMAGE="containers.virtru.com/cks:v$CKS_VERSION"
+CONTAINER_NAME="Virtru_CKS"
+EXTERNAL_PORT=$PORT
+
 if [ "$KEY_PROVIDER_TYPE" = "hsm" ]; then
-  echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt containers.virtru.com/cks:v"$CKS_VERSION" serve" > "$WORKING_DIR/run.sh"
+  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$EXTERNAL_PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt $DOCKER_IMAGE serve" > "$WORKING_DIR/run.sh"
 else
-  echo "docker run --name Virtru_CKS --interactive --tty --detach --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl containers.virtru.com/cks:v"$CKS_VERSION" serve" > "$WORKING_DIR/run.sh"
+  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$EXTERNAL_PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl $DOCKER_IMAGE serve" > "$WORKING_DIR/run.sh"
 fi
 
-printf "\nUpdated! Run the CKS with bash $WORKING_DIR/run.sh\n"
+chmod +x "$WORKING_DIR/run.sh"
+
+printf "\n${GREEN}Configuration updated!${RESET}\n\n"
+printf "Deployment type: ${BOLD}CKS Only${RESET}\n"
+printf "Docker image: $DOCKER_IMAGE\n\n"
+
+printf "To apply the changes:\n"
+printf "  1. Stop the current container: ${BOLD}docker stop $CONTAINER_NAME${RESET}\n"
+printf "  2. Remove the old container: ${BOLD}docker rm $CONTAINER_NAME${RESET}\n"
+printf "  3. Start the new container: ${BOLD}bash $WORKING_DIR/run.sh${RESET}\n"
+printf "  4. Monitor logs: ${BOLD}docker logs -f $CONTAINER_NAME${RESET}\n\n"
