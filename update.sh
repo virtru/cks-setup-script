@@ -86,18 +86,16 @@ KEY_PROVIDER_TYPE=$(cat "$WORKING_DIR"/env/cks.env | grep KEY_PROVIDER_TYPE | cu
 
 DOCKER_IMAGE="containers.virtru.com/cks:v$CKS_VERSION"
 CONTAINER_NAME="Virtru_CKS"
-EXTERNAL_PORT=$PORT
 
 if [ "$KEY_PROVIDER_TYPE" = "hsm" ]; then
-  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$EXTERNAL_PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt $DOCKER_IMAGE serve" > "$WORKING_DIR/run.sh"
+  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl --mount type=bind,source="$WORKING_DIR"/hsm-config/customerCA.crt,target=/opt/cloudhsm/etc/customerCA.crt $DOCKER_IMAGE serve" > "$WORKING_DIR/run.sh"
 else
-  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$EXTERNAL_PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl $DOCKER_IMAGE serve" > "$WORKING_DIR/run.sh"
+  echo "docker run --name $CONTAINER_NAME --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl $DOCKER_IMAGE serve" > "$WORKING_DIR/run.sh"
 fi
 
 chmod +x "$WORKING_DIR/run.sh"
 
 printf "\n${GREEN}Configuration updated!${RESET}\n\n"
-printf "Deployment type: ${BOLD}CKS Only${RESET}\n"
 printf "Docker image: $DOCKER_IMAGE\n\n"
 
 printf "To apply the changes:\n"
