@@ -11,6 +11,7 @@ RESET="\033[0m"
 CLEAR="\033c"
 
 # Defaults
+PORT=9000
 LOG_RSYS_ENABLED=false
 LOG_CONSOLE_ENABLED=true
 AUTH_TOKEN_STORAGE_TYPE="in-memory"
@@ -191,9 +192,7 @@ fi
 touch ./env/cks.env
 
 # Write the Environment File
-# CKS listens directly on port 9000.
-printf "PORT=9000\n" >> ./env/cks.env
-
+printf "PORT=%s\n" $PORT >> ./env/cks.env
 printf "LOG_RSYSLOG_ENABLED=%s\n" $LOG_RSYS_ENABLED >> ./env/cks.env
 printf "LOG_CONSOLE_ENABLED=%s\n" $LOG_CONSOLE_ENABLED >> ./env/cks.env
 printf "KEY_PROVIDER_TYPE=%s\n" $KEY_PROVIDER_TYPE >> ./env/cks.env
@@ -209,7 +208,7 @@ if [ "$HMAC_AUTH_ENABLED" = true ]; then
 fi
 
 if [ "$JWT_AUTH_ENABLED" = true ]; then
-  printf "JWT_AUTH_ISSUER=%s\n" $JWT_AUTH_ISSUER >> ./env/cks.env
+  printf "JWT_AUTH_ISSUER=%s\n" "$JWT_AUTH_ISSUER" >> ./env/cks.env
   printf "JWT_AUTH_AUDIENCE=%s\n" $JWT_AUTH_AUDIENCE >> ./env/cks.env
 fi
 
@@ -228,7 +227,6 @@ printf "\tAuth\n"
 printf "\tJWT Enabled: %s\n" "$JWT_AUTH_ENABLED"
 printf "\tHMAC Enabled: %s\n" "$HMAC_AUTH_ENABLED"
 printf "\tVirtru Org ID: %s\n\n" "$JWT_AUTH_AUDIENCE"
-
 printf "\tTroubleshooting\n"
 printf "\tSupport URL: %s\n" $SUPPORT_URL
 printf "\tSupport Email: %s\n" $SUPPORT_EMAIL
@@ -255,8 +253,5 @@ rm -rf ./cks_info
 
 # Create the Run File
 touch ./run.sh
-chmod +x ./run.sh
 
-# Generate run.sh. Node listens directly on port 9000.
-echo "docker run --name Virtru_CKS --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:9000 --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl containers.virtru.com/cks:v"$CKS_VERSION"" > ./run.sh
-
+echo "docker run --name Virtru_CKS --interactive --tty --detach --restart unless-stopped --env-file "$WORKING_DIR"/env/cks.env -p 443:$PORT --mount type=bind,source="$WORKING_DIR"/keys,target="$KEY_PROVIDER_PATH" --mount type=bind,source="$WORKING_DIR"/ssl,target=/app/ssl containers.virtru.com/cks:v"$CKS_VERSION" serve" > ./run.sh
